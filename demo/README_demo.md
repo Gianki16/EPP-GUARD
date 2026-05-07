@@ -84,6 +84,7 @@ La aplicación carga en pocos segundos y ya está lista para usar.
 
 > ⚠️ No abras el archivo haciendo doble clic — no funcionará.
 > Siempre accede desde `http://localhost:8080/...`
+> Importante tener en cuenta que el prototipo debe de lanzarse en un navegador con la aceleración de hardware activada.
 
 ---
 

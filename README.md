@@ -30,9 +30,13 @@ EPP-Guard es un sistema de visión computacional que detecta automáticamente el
 ├── presentacion.pdf                       ← Deck de 8 slides para la sustentación
 │
 └── 📁 plantillas/
-    ├── plantilla_1_problem_statement.md   ← Fase P — Problema de negocio
-    ├── plantilla_2_data_readiness.md      ← Fase R — Recursos de datos
-    └── plantilla_3_ai_product_canvas.md   ← Fase O — Oportunidad de IA
+│   ├── plantilla_1_problem_statement.md   ← Fase P — Problema de negocio
+│   ├── plantilla_2_data_readiness.md      ← Fase R — Recursos de datos
+│   └── plantilla_3_ai_product_canvas.md   ← Fase O — Oportunidad de IA
+│
+└── 📁 demo/
+    ├── README_demo.md                     ← Como deployar el prototipo
+    └── epp_guard_demo.html                ← Prototipo
 ```
 
 ---

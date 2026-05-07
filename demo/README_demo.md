@@ -98,8 +98,7 @@ La aplicación abre en el navegador. Antes de usar:
 1. Click en el botón **"Subir Foto"**
 2. Selecciona cualquier imagen de obra desde tu computadora
 3. El modelo analiza la imagen automáticamente
-4. Los recuadros de detección aparecen sobre la imagen
-5. En el panel derecho ves la lista de objetos detectados con su confianza
+4. En el panel derecho ves la lista de objetos detectados con su confianza
 
 También puedes **arrastrar y soltar** una imagen directamente sobre la pantalla.
 
@@ -107,7 +106,7 @@ También puedes **arrastrar y soltar** una imagen directamente sobre la pantalla
 
 1. Click en el botón **"Webcam"**
 2. El navegador pedirá permiso para acceder a la cámara — acepta
-3. La detección corre automáticamente sobre el video en vivo
+3. La detección corre automáticamente y en el panel derecho ves la lista de objetos detectados
 4. Click en **"Detener"** para apagar la cámara
 
 ---

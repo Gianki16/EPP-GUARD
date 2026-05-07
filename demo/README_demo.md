@@ -18,7 +18,7 @@ los siguientes elementos en una obra de construcción:
 | Botas | 🩵 Celeste |
 | Guantes | 🟡 Amarillo |
 
-Cada detección muestra un recuadro sobre el objeto con su nombre y el
+Cada detección muestra en el apartado "detección" el objeto con su nombre y el
 porcentaje de confianza del modelo (ej: `Casco 95%`).
 
 El modelo fue entrenado con **8,431 imágenes** y obtuvo:
@@ -80,7 +80,10 @@ Abre **Google Chrome** y entra a esta dirección:
 http://localhost:8080/epp_guard_demo.html
 ```
 
-La aplicación carga en pocos segundos y ya está lista para usar.
+La aplicación abre en el navegador. Antes de usar:
+
+1. Espera entre 20 y 60 segundos mientras descarga el modelo
+2. Cuando el indicador en la barra inferior se ponga en verde y diga "Modelo listo", ya puedes usar la aplicación
 
 > ⚠️ No abras el archivo haciendo doble clic — no funcionará.
 > Siempre accede desde `http://localhost:8080/...`

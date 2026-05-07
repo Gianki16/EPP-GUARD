@@ -9,7 +9,7 @@
 - Integrante 2: [Sebastian Leonardo Muñico Diaz]
 - Integrante 3: [Fernando Maquera]
 
-**Fecha de entrega:** [PENDIENTE]
+**Fecha de entrega:** 07/05/2026
 **Tipo de IA del proyecto:** ML Tradicional — Visión Computacional / Clasificación supervisada (detección de objetos)
 
 ---
@@ -30,7 +30,7 @@
 
 | # | Dataset | Fuente | Formato | N° de registros aprox. | ¿Tiene etiquetas? |
 |---|---|---|---|---|---|
-| 1 | Dataset público de detección de EPP en construcción | Roboflow Universe / Kaggle (datasets abiertos de PPE detection) | Imágenes JPG/PNG + anotaciones YOLO/COCO (.txt o .json) | 5,000 – 15,000 imágenes | SÍ (bounding boxes etiquetadas: casco, chaleco reflectivo, calzado, guantes) |
+| 1 | Dataset público de detección de EPP en construcción | Roboflow Universe / Kaggle (datasets abiertos de PPE detection) | Imágenes JPG/PNG + anotaciones YOLO/COCO (.txt o .json) | 4,000 – 15,000 imágenes | SÍ (bounding boxes etiquetadas: casco, chaleco reflectivo, calzado, guantes) |
 | 2 | Imágenes de validación en condiciones locales (luz, polvo, atuendo peruano) | Captura propia en obras piloto | JPG | 300-500 imágenes para set de prueba | SÍ — etiquetado manual del equipo |
 
 **Variable objetivo (target):**
@@ -75,7 +75,7 @@ Output esperado: bounding box por persona + etiqueta de cumplimiento por EPP.
 | Dimensión | Semáforo | Evidencia que respalda la evaluación | Plan de acción (si es 🟡 o 🔴) |
 |---|---|---|---|
 | **Disponibilidad** — ¿Los datos existen y son accesibles? | 🟢 | Existen datasets públicos abiertos de PPE detection en Roboflow Universe (>20 datasets indexados) y Kaggle, con licencias de uso para investigación/educación. | — |
-| **Volumen** — ¿Hay suficientes datos para el tipo de IA elegido? | 🟢 | Datasets públicos suman 5,000-15,000 imágenes etiquetadas. Suficiente para fine-tuning de un modelo preentrenado en MVP. | — |
+| **Volumen** — ¿Hay suficientes datos para el tipo de IA elegido? | 🟢 | Datasets públicos suman 4,000-15,000 imágenes etiquetadas. Suficiente para fine-tuning de un modelo preentrenado en MVP. | — |
 | **Calidad** — ¿Los datos están completos y son consistentes? | 🟡 | Las anotaciones varían en calidad entre datasets; algunos tienen oclusiones mal etiquetadas o clases inconsistentes. | Filtrar datasets por calidad de anotación, consolidar taxonomía de clases única, descartar imágenes ambiguas. Responsable: [PENDIENTE]. |
 | **Relevancia** — ¿Los datos representan el problema definido en Fase P? | 🟡 | La mayoría de datasets públicos provienen de obras en Asia, EE.UU. o Europa. Los uniformes, condiciones de luz, tipo de andamiaje y polvo de obras peruanas pueden diferir. | Complementar con dataset propio de validación capturado en obra peruana (Dataset 3) para medir caída de desempeño y reentrenar si es necesario. |
 | **Legalidad** — ¿Hay autorización para usar estos datos? | 🟢 | Datasets bajo licencias Creative Commons / MIT / Apache. Para imágenes propias se requerirá consentimiento de la empresa constructora y anonimización de rostros. | — |

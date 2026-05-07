@@ -29,9 +29,8 @@ El problema es de percepción visual a escala: identificar si una persona usa o 
 
 | Fuente | Imágenes | Disponib. | Volumen | Calidad | Relevancia | Legalidad |
 |---|---|---|---|---|---|---|
-| Datasets públicos PPE (Roboflow / Kaggle) | 10,000–22,000 | 🟢 | 🟢 | 🟡 | 🟡 | 🟢 |
-| Imágenes propias — obra piloto Lima | 1,000–2,000 (meta) | 🟡 | 🟡 | 🟡 | 🟢 | 🔴 |
-| Set validación — contexto peruano | 300–500 (meta) | 🟡 | 🟡 | 🟡 | 🟢 | 🟡 |
+| Datasets públicos PPE (Roboflow / Kaggle) | 4,000–15,000 | 🟢 | 🟢 | 🟡 | 🟡 | 🟢 |
+| Set validación — contexto peruano | 100-250 (meta) | 🟡 | 🟡 | 🟡 | 🟢 | 🟡 |
 
 **Bloqueante activo:** Las imágenes propias de obra contienen datos biométricos (rostros) sujetos a la Ley N° 29733. Plan de mitigación: protocolo de consentimiento informado + blur automático de rostros antes de cualquier captura. Fecha límite: Semana 5.
 

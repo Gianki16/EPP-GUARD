@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPP-Guard — Detección de EPP</title>
+<script src="https://cdn.jsdelivr.net/npm/inferencejs"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --yellow: #F5C400;
+    --orange: #E8620A;
+    --dark:   #0A0A0A;
+    --dark2:  #111111;
+    --dark3:  #1A1A1A;
+    --dark4:  #242424;
+    --white:  #F0EDE6;
+    --gray:   #666;
+    --lgray:  #999;
+    --green:  #22C55E;
+    --red:    #EF4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--dark);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--dark4);
+    position: sticky;
+    top: 0;
+    background: var(--dark);
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-badge {
+    background: var(--yellow);
+    color: var(--dark);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+  }
+
+  .logo-name {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .header-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 1px;
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 60px 40px 40px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: end;
+    border-bottom: 1px solid var(--dark4);
+  }
+
+  .hero h1 {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -1px;
+  }
+
+  .hero h1 span { color: var(--yellow); }
+
+  .hero p {
+    margin-top: 16px;
+    font-size: 15px;
+    color: var(--lgray);
+    line-height: 1.7;
+    max-width: 520px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .metrics-row {
+    display: flex;
+    gap: 2px;
+  }
+
+  .metric {
+    background: var(--dark3);
+    border: 1px solid var(--dark4);
+    padding: 16px 20px;
+    text-align: center;
+    min-width: 90px;
+  }
+
+  .metric-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--yellow);
+    line-height: 1;
+  }
+
+  .metric-lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--gray);
+    letter-spacing: 1.5px;
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN ── */
+  main {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    min-height: calc(100vh - 180px);
+  }
+
+  /* ── CANVAS AREA ── */
+  .canvas-area {
+    border-right: 1px solid var(--dark4);
+    position: relative;
+    background: var(--dark2);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .canvas-toolbar {
+    display: flex;
+    gap: 2px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--dark4);
+    background: var(--dark);
+  }
+
+  .btn {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 10px 20px;
+    border: 1px solid var(--dark4);
+    background: var(--dark3);
+    color: var(--lgray);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .btn:hover { background: var(--dark4); color: var(--white); }
+
+  .btn.active {
+    background: var(--yellow);
+    color: var(--dark);
+    border-color: var(--yellow);
+  }
+
+  .btn.danger {
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .btn.danger:hover { background: var(--red); color: white; }
+
+  .canvas-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    min-height: 400px;
+  }
+
+  #videoEl, #imgEl {
+    max-width: 100%;
+    max-height: 560px;
+    display: none;
+    border: 1px solid var(--dark4);
+  }
+
+  #canvas {
+    position: absolute;
+    pointer-events: none;
+    border: 1px solid var(--dark4);
+  }
+
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: var(--gray);
+    text-align: center;
+  }
+
+  .placeholder-icon {
+    font-size: 64px;
+    opacity: 0.3;
+  }
+
+  .placeholder p {
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 280px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    position: absolute;
+    inset: 20px;
+    border: 2px dashed var(--dark4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .drop-zone.active {
+    opacity: 1;
+    border-color: var(--yellow);
+    background: rgba(245,196,0,0.05);
+  }
+
+  /* Status bar */
+  .status-bar {
+    padding: 12px 20px;
+    background: var(--dark);
+    border-top: 1px solid var(--dark4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gray);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gray);
+    flex-shrink: 0;
+  }
+
+  .status-dot.active { background: var(--green); animation: pulse 1.5s infinite; }
+  .status-dot.error  { background: var(--red); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-section {
+    padding: 20px;
+    border-bottom: 1px solid var(--dark4);
+  }
+
+  .sidebar-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--gray);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* Upload */
+  .upload-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: var(--dark3);
+    border: 1px dashed var(--dark4);
+    color: var(--lgray);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .upload-btn:hover {
+    background: var(--dark4);
+    border-color: var(--yellow);
+    color: var(--yellow);
+  }
+
+  #fileInput { display: none; }
+
+  /* Confidence slider */
+  .slider-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--lgray);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .slider-val { color: var(--yellow); font-weight: 600; }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--yellow);
+    cursor: pointer;
+  }
+
+  /* Detections list */
+  .detections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .detection-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--dark3);
+    border: 1px solid var(--dark4);
+    border-left: 3px solid var(--green);
+    font-size: 12px;
+  }
+
+  .detection-item.warning {
+    border-left-color: var(--red);
+    background: rgba(239,68,68,0.06);
+  }
+
+  .det-class {
+    font-weight: 700;
+    flex: 1;
+    color: var(--white);
+  }
+
+  .det-conf {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--lgray);
+  }
+
+  .det-icon { font-size: 14px; }
+
+  .no-detections {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gray);
+    text-align: center;
+    padding: 20px 0;
+    letter-spacing: 0.5px;
+  }
+
+  /* Alert banner */
+  .alert-banner {
+    display: none;
+    margin: 0 20px 12px;
+    padding: 12px 16px;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid var(--red);
+    border-left: 4px solid var(--red);
+    font-size: 12px;
+    color: var(--red);
+    font-family: 'IBM Plex Mono', monospace;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Classes legend */
+  .class-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .class-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--lgray);
+  }
+
+  .class-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* FPS counter */
+  #fpsCounter {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--gray);
+  }
+
+  /* Footer */
+  footer {
+    padding: 16px 40px;
+    border-top: 1px solid var(--dark4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 1px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--dark2); }
+  ::-webkit-scrollbar-thumb { background: var(--dark4); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">EPP</div>
+    <div class="logo-name">EPP-Guard</div>
+  </div>
+  <div class="header-meta">
+    AD5018 · IA para Negocios · UTEC 2026<br>
+    RF-DETR Small · mAP@50: 97.7%
+  </div>
+</header>
+
+<div class="hero">
+  <div>
+    <h1>Detección automática<br>de <span>EPP</span> en obra</h1>
+    <p>Sube una foto o activa la cámara para detectar cascos y chalecos de seguridad en tiempo real.</p>
+  </div>
+  <div class="metrics-row">
+    <div class="metric">
+      <div class="metric-val">97.7%</div>
+      <div class="metric-lbl">mAP@50</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">99.6%</div>
+      <div class="metric-lbl">Precision</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">97.6%</div>
+      <div class="metric-lbl">Recall</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">98.6%</div>
+      <div class="metric-lbl">F1 Score</div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="canvas-area">
+    <div class="canvas-toolbar">
+      <button class="btn" id="btnCam" onclick="startCam()">📷 Webcam</button>
+      <button class="btn" id="btnStop" onclick="stopCam()" style="display:none">⏹ Detener</button>
+      <label class="btn" for="fileInput">🖼 Subir Foto</label>
+      <input type="file" id="fileInput" accept="image/*" onchange="loadImage(event)">
+      <button class="btn danger" onclick="clearAll()" style="margin-left:auto">✕ Limpiar</button>
+    </div>
+
+    <div id="alertBanner" class="alert-banner">
+      ⚠️ INCUMPLIMIENTO DETECTADO — Sin casco o chaleco
+    </div>
+
+    <div class="canvas-wrapper" id="canvasWrapper"
+         ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+
+      <div class="drop-zone" id="dropZone">
+        <span style="color:var(--yellow);font-weight:700;font-size:14px">SOLTAR IMAGEN AQUÍ</span>
+      </div>
+
+      <div class="placeholder" id="placeholder">
+        <div class="placeholder-icon">🏗️</div>
+        <p>Sube una foto de obra o activa la webcam para comenzar la detección</p>
+        <p style="font-size:10px;opacity:0.5">También puedes arrastrar una imagen aquí</p>
+      </div>
+
+      <video id="videoEl" autoplay muted playsinline></video>
+      <img id="imgEl" alt="imagen de análisis">
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Listo — sube una imagen o activa la cámara</span>
+      <span id="fpsCounter" style="margin-left:auto"></span>
+    </div>
+  </div>
+
+  <div class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Confianza mínima</div>
+      <div class="slider-row">
+        <span>Umbral</span>
+        <span class="slider-val" id="confVal">50%</span>
+      </div>
+      <input type="range" min="10" max="90" value="50" id="confSlider"
+             oninput="document.getElementById('confVal').textContent=this.value+'%'">
+    </div>
+
+    <div class="sidebar-section" style="flex:1">
+      <div class="sidebar-title">Detecciones</div>
+      <div class="detections-list" id="detList">
+        <div class="no-detections">Sin detecciones aún</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Clases del modelo</div>
+      <div class="class-list">
+        <div class="class-item">
+          <div class="class-dot" style="background:#22C55E"></div>
+          Humano
+        </div>
+        <div class="class-item">
+          <div class="class-dot" style="background:#3B82F6"></div>
+          Casco
+        </div>
+        <div class="class-item">
+          <div class="class-dot" style="background:#8B5CF6"></div>
+          Chaleco
+        </div>
+        <div class="class-item">
+          <div class="class-dot" style="background:#06B6D4"></div>
+          Botas
+        </div>
+        <div class="class-item">
+          <div class="class-dot" style="background:#F59E0B"></div>
+          Guantes
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <span>EPP-Guard · AD5018 Inteligencia Artificial para Negocios · UTEC 2026</span>
+  <span>Roboflow RF-DETR Object Detection (Small) · epp-version-1/2</span>
+</footer>
+
+<script>
+// ── COLORES POR CLASE ──────────────────────────────────────────────
+const CLASS_COLORS = {
+  'Humano':  '#22C55E',
+  'Casco':   '#3B82F6',
+  'Chaleco': '#8B5CF6',
+  'Botas':   '#06B6D4',
+  'Guantes': '#F59E0B',
+};
+
+// ── MODELO ────────────────────────────────────────────────────────
+const { InferenceEngine, CVImage } = inferencejs;
+const inferEngine = new InferenceEngine();
+let workerId = null;
+let isRunning = false;
+let stream    = null;
+let frameCount = 0, lastFpsTime = Date.now();
+
+// Cargar modelo al iniciar
+inferEngine
+  .startWorker("epp-version-1", "2", "rf_xGYAd5IFuKhXV6Z0WEciFf381au1")
+  .then(id => {
+    workerId = id;
+    setStatus('Modelo cargado — listo para detectar', 'active');
+    console.log("Modelo listo:", id);
+  })
+  .catch(err => {
+    setStatus('Error al cargar el modelo', 'error');
+    console.error(err);
+  });
+
+// ── HELPERS UI ───────────────────────────────────────────────────
+function setStatus(msg, type = '') {
+  document.getElementById('statusText').textContent = msg;
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot' + (type ? ' ' + type : '');
+}
+
+function showPlaceholder(show) {
+  document.getElementById('placeholder').style.display = show ? 'flex' : 'none';
+}
+
+function getConfidence() {
+  return parseInt(document.getElementById('confSlider').value) / 100;
+}
+
+// ── DIBUJAR BOXES ─────────────────────────────────────────────────
+function drawPredictions(predictions, sourceEl) {
+  const canvas  = document.getElementById('canvas');
+  const ctx     = canvas.getContext('2d');
+  const wrapper = document.getElementById('canvasWrapper');
+
+  // Sincronizar tamaño canvas con el elemento fuente
+  const rect = sourceEl.getBoundingClientRect();
+  const wrapRect = wrapper.getBoundingClientRect();
+
+  canvas.width  = rect.width;
+  canvas.height = rect.height;
+  canvas.style.left = (rect.left - wrapRect.left) + 'px';
+  canvas.style.top  = (rect.top  - wrapRect.top)  + 'px';
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const scaleX = rect.width  / (sourceEl.videoWidth  || sourceEl.naturalWidth  || sourceEl.width);
+  const scaleY = rect.height / (sourceEl.videoHeight || sourceEl.naturalHeight || sourceEl.height);
+
+  const threshold = getConfidence();
+  const filtered  = predictions.filter(p => p.confidence >= threshold);
+
+
+  const detList   = document.getElementById('detList');
+  detList.innerHTML = '';
+
+  if (filtered.length === 0) {
+    detList.innerHTML = '<div class="no-detections">Sin detecciones</div>';
+  }
+
+  filtered.forEach(pred => {
+    const color = CLASS_COLORS[pred.class] || '#F5C400';
+    const x = (pred.x - pred.width  / 2) * scaleX;
+    const y = (pred.y - pred.height / 2) * scaleY;
+    const w = pred.width  * scaleX;
+    const h = pred.height * scaleY;
+    const conf = Math.round(pred.confidence * 100);
+
+    // Box
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 2.5;
+    ctx.strokeRect(x, y, w, h);
+
+    // Etiqueta fondo
+    ctx.fillStyle = color;
+    const label   = `${pred.class} ${conf}%`;
+    ctx.font      = 'bold 13px Syne, sans-serif';
+    const tw      = ctx.measureText(label).width + 10;
+    ctx.fillRect(x, y - 22, tw, 22);
+
+    // Etiqueta texto
+    ctx.fillStyle = pred.class.startsWith('no') ? '#fff' : '#000';
+    ctx.fillText(label, x + 5, y - 6);
+
+    const item = document.createElement('div');
+    item.className = 'detection-item';
+    item.innerHTML = `
+      <span class="det-icon">✓</span>
+      <span class="det-class">${pred.class}</span>
+      <span class="det-conf">${conf}%</span>
+    `;
+    detList.appendChild(item);
+  });
+
+  document.getElementById('alertBanner').style.display = 'none';
+}
+
+// ── IMAGEN ESTÁTICA ───────────────────────────────────────────────
+function loadImage(event) {
+  stopCam();
+  const file = event.target.files[0];
+  if (!file) return;
+  readFile(file);
+}
+
+function readFile(file) {
+  if (!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('imgEl');
+    img.onload = () => {
+      img.style.display = 'block';
+      document.getElementById('videoEl').style.display = 'none';
+      showPlaceholder(false);
+      runOnImage(img);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function runOnImage(imgEl) {
+  if (!workerId) { setStatus('Modelo aún cargando...', ''); return; }
+  setStatus('Analizando imagen...', 'active');
+  try {
+    const img = new CVImage(imgEl);
+    const res = await inferEngine.infer(workerId, img);
+
+    // Extraer predicciones sin importar el formato de la respuesta
+    let preds = [];
+    if (Array.isArray(res)) {
+      preds = res;
+    } else if (res && Array.isArray(res.predictions)) {
+      preds = res.predictions;
+    } else if (res && res[0] && Array.isArray(res[0].predictions)) {
+      preds = res[0].predictions;
+    } else if (res && typeof res === 'object') {
+      const found = Object.values(res).find(v => Array.isArray(v));
+      if (found) preds = found;
+    }
+    console.log("Respuesta API:", JSON.stringify(res).slice(0,200));
+    console.log("Predicciones:", preds.length);
+
+    drawPredictions(preds, imgEl);
+    setStatus("Análisis completado — " + preds.length + " objeto(s) detectado(s)", 'active');
+  } catch (e) {
+    setStatus('Error en inferencia', 'error');
+    console.error(e);
+  }
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────────────
+function dragOver(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.add('active');
+}
+
+function dragLeave() {
+  document.getElementById('dropZone').classList.remove('active');
+}
+
+function dropFile(e) {
+  e.preventDefault();
+  dragLeave();
+  const file = e.dataTransfer.files[0];
+  if (file) readFile(file);
+}
+
+// ── WEBCAM ────────────────────────────────────────────────────────
+async function startCam() {
+  if (!workerId) { setStatus('Modelo aún cargando...', ''); return; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+    const video = document.getElementById('videoEl');
+    video.srcObject = stream;
+    video.style.display = 'block';
+    document.getElementById('imgEl').style.display = 'none';
+    showPlaceholder(false);
+
+    document.getElementById('btnCam').style.display  = 'none';
+    document.getElementById('btnStop').style.display = 'inline-block';
+    setStatus('Cámara activa — detectando en tiempo real', 'active');
+
+    isRunning = true;
+    requestAnimationFrame(camLoop);
+  } catch (e) {
+    setStatus('No se pudo acceder a la cámara', 'error');
+    console.error(e);
+  }
+}
+
+async function camLoop() {
+  if (!isRunning) return;
+  const video = document.getElementById('videoEl');
+  if (video.readyState === 4) {
+    try {
+      const img = new CVImage(video);
+      const res = await inferEngine.infer(workerId, img);
+      let preds = [];
+      if (Array.isArray(res)) { preds = res; }
+      else if (res && Array.isArray(res.predictions)) { preds = res.predictions; }
+      else if (res && res[0] && Array.isArray(res[0].predictions)) { preds = res[0].predictions; }
+      else if (res && typeof res === 'object') { const f = Object.values(res).find(v=>Array.isArray(v)); if(f) preds=f; }
+      drawPredictions(preds, video);
+
+      // FPS
+      frameCount++;
+      const now = Date.now();
+      if (now - lastFpsTime >= 1000) {
+        document.getElementById('fpsCounter').textContent = frameCount + ' fps';
+        frameCount = 0; lastFpsTime = now;
+      }
+    } catch (e) { /* continuar */ }
+  }
+  requestAnimationFrame(camLoop);
+}
+
+function stopCam() {
+  isRunning = false;
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  document.getElementById('videoEl').style.display = 'none';
+  document.getElementById('btnCam').style.display  = 'inline-block';
+  document.getElementById('btnStop').style.display = 'none';
+  document.getElementById('fpsCounter').textContent = '';
+  setStatus('Cámara detenida', '');
+}
+
+function clearAll() {
+  stopCam();
+  document.getElementById('imgEl').style.display = 'none';
+  document.getElementById('imgEl').src = '';
+  document.getElementById('canvas').getContext('2d').clearRect(0, 0, 9999, 9999);
+  document.getElementById('detList').innerHTML = '<div class="no-detections">Sin detecciones aún</div>';
+  document.getElementById('alertBanner').style.display = 'none';
+  showPlaceholder(true);
+  setStatus('Listo — sube una imagen o activa la cámara', '');
+  document.getElementById('fileInput').value = '';
+}
+</script>
+</body>
+</html>

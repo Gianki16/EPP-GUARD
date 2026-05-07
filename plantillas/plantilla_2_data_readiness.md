@@ -78,7 +78,7 @@ Output esperado: bounding box por persona + etiqueta de cumplimiento por EPP.
 | **Volumen** — ¿Hay suficientes datos para el tipo de IA elegido? | 🟢 | Datasets públicos suman 4,000-15,000 imágenes etiquetadas. Suficiente para fine-tuning de un modelo preentrenado en MVP. | — |
 | **Calidad** — ¿Los datos están completos y son consistentes? | 🟡 | Las anotaciones varían en calidad entre datasets; algunos tienen oclusiones mal etiquetadas o clases inconsistentes. | Filtrar datasets por calidad de anotación, consolidar taxonomía de clases única, descartar imágenes ambiguas. Responsable: [PENDIENTE]. |
 | **Relevancia** — ¿Los datos representan el problema definido en Fase P? | 🟡 | La mayoría de datasets públicos provienen de obras en Asia, EE.UU. o Europa. Los uniformes, condiciones de luz, tipo de andamiaje y polvo de obras peruanas pueden diferir. | Complementar con dataset propio de validación capturado en obra peruana (Dataset 3) para medir caída de desempeño y reentrenar si es necesario. |
-| **Legalidad** — ¿Hay autorización para usar estos datos? | 🟢 | Datasets bajo licencias Creative Commons / MIT / Apache. Para imágenes propias se requerirá consentimiento de la empresa constructora y anonimización de rostros. | — |
+| **Legalidad** — ¿Hay autorización para usar estos datos? | 🟢 | Datasets bajo licencias Creative Commons / MIT / Apache. Para imágenes propias se requeriría consentimiento de la empresa constructora y anonimización de rostros. | — |
 
 ---
 

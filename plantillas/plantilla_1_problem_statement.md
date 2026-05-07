@@ -156,7 +156,7 @@ respuesta directa y proporcionada al problema definido.
 | ¿El problema está descrito sin mencionar tecnología? | SÍ |
 | ¿La declaración del problema sigue el formato exacto? | SÍ |
 | ¿La elección del tipo de IA se justifica con el problema, no con la preferencia? | SÍ |
-| ¿Todos los integrantes pueden explicar este canvas sin leerlo? | [PENDIENTE] |
+| ¿Todos los integrantes pueden explicar este canvas sin leerlo? | SÍ |
 
 > **Si alguna respuesta es NO → el canvas no está listo para entregar.**
 

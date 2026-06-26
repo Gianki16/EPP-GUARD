@@ -9,7 +9,8 @@
 - Integrante 2: Sebastian Leonardo Muñico Diaz
 - Integrante 3: Fernando Maquera
 
-**Fecha de entrega:** [completar — Semana 14]
+**Fecha de entrega:** 26/06/2026 — Semana 14
+
 **Versión del canvas:** v2 (final PC2)
 
 > **Actualización PC2:** Se confirma el stack realmente construido (modelo `epp-casco-v3` en Docker local expuesto con Pinggy, frontend en Netlify + alertas n8n/Twilio), se precisa el alcance ejecutado (foco en casco) y los OKRs se mantienen **idénticos** a los comprometidos en la PC1 — son inamovibles.

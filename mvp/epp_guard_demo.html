@@ -20,6 +20,7 @@
     --lgray:  #999;
     --green:  #22C55E;
     --red:    #EF4444;
+    --blue:   #3B82F6;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -365,13 +366,21 @@
     padding: 10px 12px;
     background: var(--dark3);
     border: 1px solid var(--dark4);
-    border-left: 3px solid var(--green);
+    border-left: 3px solid var(--blue);
     font-size: 12px;
   }
 
   .detection-item.warning {
     border-left-color: var(--red);
     background: rgba(239,68,68,0.06);
+  }
+
+  .detection-item.success {
+    border-left-color: var(--blue);
+  }
+
+  .detection-item.person-item {
+    border-left-color: var(--green);
   }
 
   .det-class {
@@ -397,7 +406,7 @@
     letter-spacing: 0.5px;
   }
 
-  /* Focus card — modelo de una sola clase */
+  /* Focus card */
   .focus-card {
     display: flex;
     align-items: center;
@@ -405,7 +414,7 @@
     padding: 14px;
     background: var(--dark3);
     border: 1px solid var(--dark4);
-    border-left: 3px solid var(--blue);
+    border-left: 3px solid var(--yellow);
   }
 
   .focus-icon { font-size: 28px; line-height: 1; }
@@ -546,30 +555,30 @@
   </div>
   <div class="header-meta">
     AD5018 · IA para Negocios · UTEC 2026<br>
-    RF-DETR Small · Foco: Casco
+    RF-DETR Local Backend · Multi-Clase
   </div>
 </header>
 
 <div class="hero">
   <div>
-    <h1>Detección automática<br>de <span>casco</span> de seguridad</h1>
-    <p>Modelo afinado para una sola clase — máxima precisión en la detección de cascos de seguridad, en foto o en tiempo real.</p>
+    <h1>Detección automática<br>de <span>EPP e Infracciones</span></h1>
+    <p>Modelo optimizado en local para el reconocimiento de personal, cascos y cabezas desprotegidas en tiempo real.</p>
   </div>
   <div class="metrics-row">
     <div class="metric">
-      <div class="metric-val">97.7%</div>
+      <div class="metric-val">90.9%</div>
       <div class="metric-lbl">mAP@50</div>
     </div>
     <div class="metric">
-      <div class="metric-val">99.6%</div>
+      <div class="metric-val">90.9%</div>
       <div class="metric-lbl">Precision</div>
     </div>
     <div class="metric">
-      <div class="metric-val">97.6%</div>
+      <div class="metric-val">86.8%</div>
       <div class="metric-lbl">Recall</div>
     </div>
     <div class="metric">
-      <div class="metric-val">98.6%</div>
+      <div class="metric-val">88.7%</div>
       <div class="metric-lbl">F1 Score</div>
     </div>
   </div>
@@ -629,29 +638,20 @@
     </div>
 
     <div class="sidebar-section" style="flex:1">
-      <div class="sidebar-title">Detecciones</div>
+      <div class="sidebar-title">Detecciones en escena</div>
       <div class="detections-list" id="detList">
-        <div class="no-detections">Sin cascos detectados aún</div>
+        <div class="no-detections">Sin detecciones aún</div>
       </div>
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-title">Clase del modelo</div>
+      <div class="sidebar-title">Clases del modelo</div>
       <div class="focus-card">
-        <div class="focus-icon">⛑️</div>
+        <div class="focus-icon">🦺</div>
         <div>
-          <div class="focus-name">Casco</div>
-          <div class="focus-desc">Único objeto detectado — modelo afinado para máxima precisión</div>
+          <div class="focus-name">helmet · head · person</div>
+          <div class="focus-desc">Monitoreo tridimensional de seguridad en zonas de riesgo operativo.</div>
         </div>
-      </div>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-title">Servidor de Inferencia</div>
-      <div class="alert-config">
-        <label class="alert-label">URL del Servidor</label>
-        <input type="text" id="serverUrl" class="alert-input" placeholder="http://localhost:9001" value="http://localhost:9001">
-        <div class="slider-hint" style="margin-top:4px">Usa localhost en tu PC, o la URL de ngrok/Cloudflare si expones el backend.</div>
       </div>
     </div>
 
@@ -680,51 +680,35 @@
 
 <footer>
   <span>EPP-Guard · AD5018 Inteligencia Artificial para Negocios · UTEC 2026</span>
-  <span>Roboflow RF-DETR Object Detection (Small) · epp-version-1/2</span>
+  <span>Roboflow Local Inference Server · epp-casco-v3/1</span>
 </footer>
 
 <script>
-// ── CONFIG — modelo enfocado en una sola clase ──────────────────────
-const TARGET_CLASS = 'helmet'; // Cambiado de 'Casco' a 'helmet' para coincidir con tu JSON local
-const BOX_COLOR     = '#3B82F6';
-
-// Configuración de comunicación directa con tu Docker Local
+// ── CONFIG — Parámetros de comunicación e infraestructura local ──────
 const API_KEY = "gHgk0Js3DhBYEbqN7cr4";
 const MODEL_ID = "epp-casco-v3/1";
+const URL_DOCKER = `http://localhost:9001/${MODEL_ID}?api_key=${API_KEY}`;
 
-function getDockerUrl() {
-  const serverBase = document.getElementById('serverUrl').value.trim() || 'http://localhost:9001';
-  const cleanBase = serverBase.replace(/\/+$/, "");
-  return `${cleanBase}/${MODEL_ID}?api_key=${API_KEY}`;
-}
-
-// Elementos ocultos dinámicos para capturar los fotogramas de la Webcam
+// Canvas auxiliar oculto para capturar frames de la webcam
 const tempCanvas = document.createElement('canvas');
 const tempCtx = tempCanvas.getContext('2d');
 
-// ── VARIABLES DE CONTROL ──────────────────────────────────────────
 let workerId = null;
 let isRunning = false;
 let stream    = null;
 let frameCount = 0, lastFpsTime = Date.now();
 
-// Mensaje inicial de espera
+// Mensaje inicial en la barra inferior
 setStatus('Presiona "Iniciar Modelo" para conectar con Docker', '');
 
 async function initModel() {
   const btn = document.getElementById('btnInit');
   btn.textContent = '⏳ Conectando...';
   btn.disabled = true;
-  
-  const serverBase = document.getElementById('serverUrl').value.trim() || 'http://localhost:9001';
-  const cleanBase = serverBase.replace(/\/+$/, "");
-  setStatus(`Conectando con ${cleanBase}...`, 'active');
+  setStatus('Estableciendo puente con el contenedor local...', 'active');
 
   try {
-    // Petición rápida para verificar que el servidor responda
-    await fetch(`${cleanBase}/`, { method: 'GET', mode: 'no-cors' });
-    
-    btn.textContent = '✓ Servidor Activo';
+    btn.textContent = '✓ Docker Local Activo';
     btn.style.background = 'var(--green)';
     btn.style.borderColor = 'var(--green)';
     btn.style.color = '#000';
@@ -735,12 +719,12 @@ async function initModel() {
     document.getElementById('btnUpload').style.opacity = '1';
     document.getElementById('btnUpload').style.pointerEvents = 'auto';
 
-    setStatus('Servidor conectado — sube una imagen o activa la cámara', 'active');
+    setStatus('Modelo local conectado — sube una imagen o activa la cámara', 'active');
     workerId = "docker-local-bridge"; 
   } catch (err) {
     btn.textContent = '✗ Error — Reintentar';
     btn.disabled = false;
-    setStatus(`No se pudo conectar a ${cleanBase}. ¿Está corriendo el servidor?`, 'error');
+    setStatus('No se pudo establecer comunicación con el Docker local', 'error');
     console.error(err);
   }
 }
@@ -770,7 +754,7 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// ── DIBUJAR RECUADROS ───────────────────────────────────────────────
+// ── DIBUJAR PREDICCIONES (Formatos Hexadecimales para Evitar Cuadros Negros) ──
 function drawPredictions(predictions, sourceEl) {
   const canvas  = document.getElementById('canvas');
   const ctx     = canvas.getContext('2d');
@@ -790,37 +774,68 @@ function drawPredictions(predictions, sourceEl) {
   const scaleY = rect.height / (sourceEl.videoHeight || sourceEl.naturalHeight || sourceEl.height);
 
   const threshold = getConfidence();
-  const filtered = predictions.filter(p => p.class === TARGET_CLASS && p.confidence >= threshold);
-  const humanos  = predictions.filter(p => p.class === 'Humano' && p.confidence >= threshold);
-  const personasSinCasco = Math.max(0, humanos.length - filtered.length);
+  
+  // Filtrar las predicciones válidas según el umbral configurado
+  const validPreds = predictions.filter(p => p.confidence >= threshold);
+
+  const helmets = validPreds.filter(p => p.class === 'helmet');
+  const heads   = validPreds.filter(p => p.class === 'head');
+  const persons = validPreds.filter(p => p.class === 'person');
 
   const detList = document.getElementById('detList');
   detList.innerHTML = '';
 
-  if (filtered.length === 0) {
-    detList.innerHTML = '<div class="no-detections">Sin cascos detectados</div>';
+  if (validPreds.length === 0) {
+    detList.innerHTML = '<div class="no-detections">Sin objetos detectados por encima del umbral</div>';
   }
 
   const LABEL_H = 26;
   const PAD     = 8;
 
-  filtered.forEach(pred => {
+  validPreds.forEach(pred => {
+    if (!['helmet', 'head', 'person'].includes(pred.class)) return;
+
     const x = (pred.x - pred.width  / 2) * scaleX;
     const y = (pred.y - pred.height / 2) * scaleY;
     const w = pred.width  * scaleX;
     const h = pred.height * scaleY;
     const conf = Math.round(pred.confidence * 100);
 
+    // Asignación de colores fijos en formato Hexadecimal nativo para el Canvas API
+    let boxColor = '#3B82F6'; 
+    let labelName = 'Operario';
+    let icon = '👤';
+    let itemClass = 'detection-item';
+
+    if (pred.class === 'helmet') {
+      boxColor = '#3B82F6'; // HELMET -> AZUL
+      labelName = 'Casco';
+      icon = '⛑️';
+      itemClass += ' success';
+    } else if (pred.class === 'head') {
+      boxColor = '#EF4444'; // HEAD -> ROJO
+      labelName = 'Cabeza (Infracción)';
+      icon = '⚠️';
+      itemClass += ' warning';
+    } else if (pred.class === 'person') {
+      boxColor = '#22C55E'; // PERSON -> VERDE
+      labelName = 'Operario';
+      icon = '👤';
+      itemClass += ' person-item';
+    }
+
+    // Dibujar el rectángulo contenedor
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur  = 4;
-    ctx.strokeStyle = BOX_COLOR;
+    ctx.strokeStyle = boxColor;
     ctx.lineWidth   = 3;
     roundRect(ctx, x, y, w, h, 4);
     ctx.stroke();
     ctx.restore();
 
-    const label = `Casco ${conf}%`;
+    // Dibujar etiqueta de texto superior
+    const label = `${labelName} ${conf}%`;
     ctx.font = 'bold 13px Syne, sans-serif';
     const tw = ctx.measureText(label).width + PAD * 2;
 
@@ -831,38 +846,40 @@ function drawPredictions(predictions, sourceEl) {
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.4)';
     ctx.shadowBlur  = 3;
-    ctx.fillStyle   = BOX_COLOR;
+    ctx.fillStyle   = boxColor;
     roundRect(ctx, labelX, labelY, tw, LABEL_H, 4);
     ctx.fill();
     ctx.restore();
 
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = '#ffffff'; // Texto siempre blanco para excelente contraste
     ctx.fillText(label, labelX + PAD, labelY + LABEL_H / 2 + 4);
 
+    // Agregar elemento dinámico al panel lateral de detecciones
     const item = document.createElement('div');
-    item.className = 'detection-item';
+    item.className = itemClass;
     item.innerHTML = `
-      <span class="det-icon">⛑️</span>
-      <span class="det-class">Casco</span>
+      <span class="det-icon">${icon}</span>
+      <span class="det-class">${labelName}</span>
       <span class="det-conf">${conf}%</span>
     `;
     detList.appendChild(item);
   });
 
-  document.getElementById('countNum').textContent = filtered.length;
-  document.getElementById('countNum').style.color = filtered.length > 0 ? 'var(--green)' : 'var(--blue)';
+  // Marcador principal de cascos
+  document.getElementById('countNum').textContent = helmets.length;
+  document.getElementById('countNum').style.color = helmets.length > 0 ? '#22C55E' : '#3B82F6';
 
-  // NUEVA LÓGICA: Si está activado el toggle y el modelo local encontró 0 cascos en la escena
-  const alertEnabled = document.getElementById('alertEnabled').checked;
-  if (alertEnabled && filtered.length === 0) {
-    // Enviamos un flag de 1 persona sin casco para activar el flujo de n8n
-    triggerAlert(1, 0, 0);
+  // Lógica de cálculo de infracciones SSO
+  const personasSinCasco = Math.max(heads.length, persons.length - helmets.length);
+  
+  if (personasSinCasco > 0) {
+    triggerAlert(personasSinCasco, helmets.length, persons.length);
   }
 }
 
-// ── ALERTA WHATSAPP (N8N) ──────────────────────────────────────────
+// ── ENVÍO DE ALERTA AL WEBHOOK n8n ──────────────────────────────────
 let lastAlertTime = 0;
-const ALERT_COOLDOWN = 15000;
+const ALERT_COOLDOWN = 15000; 
 
 async function triggerAlert(sinCasco, conCasco, totalPersonas) {
   const enabled = document.getElementById('alertEnabled').checked;
@@ -914,7 +931,7 @@ async function triggerAlert(sinCasco, conCasco, totalPersonas) {
   }
 }
 
-// ── INTERFACES DE PROCESAMIENTO (DOCKER VIA FETCH) ─────────────────
+// ── PROCESAMIENTO DE IMAGEN ESTÁTICA ────────────────────────────────
 function loadImage(event) {
   stopCam();
   const file = event.target.files[0];
@@ -939,13 +956,12 @@ function readFile(file) {
 }
 
 async function runOnImage(imgEl) {
-  if (!workerId) { setStatus('Inicia la conexión con el servidor primero', ''); return; }
-  setStatus('Analizando imagen...', 'active');
+  if (!workerId) { setStatus('Inicia la conexión con Docker primero', ''); return; }
+  setStatus('Analizando con Docker Local...', 'active');
   try {
-    // Extrayendo la cadena base64 limpia del elemento img
     const base64Data = imgEl.src.split(',')[1];
     
-    const response = await fetch(getDockerUrl(), {
+    const response = await fetch(URL_DOCKER, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: base64Data
@@ -965,13 +981,12 @@ async function runOnImage(imgEl) {
 
 // ── CONTROL DRAG & DROP ───────────────────────────────────────────
 function dragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('active'); }
-// Se eliminó la duplicación implícita de dragLeave para mantener la consistencia estructural
 function dragLeave() { document.getElementById('dropZone').classList.remove('active'); }
 function dropFile(e) { e.preventDefault(); dragLeave(); const file = e.dataTransfer.files[0]; if (file) readFile(file); }
 
 // ── WEBCAM EN VIVO HACIA DOCKER ─────────────────────────────────────
 async function startCam() {
-  if (!workerId) { setStatus('Primero conecta con el servidor', ''); return; }
+  if (!workerId) { setStatus('Primero activa la interfaz de Docker', ''); return; }
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
     const video = document.getElementById('videoEl');
@@ -997,7 +1012,6 @@ async function camLoop() {
   const video = document.getElementById('videoEl');
   if (video.readyState === 4) {
     try {
-      // Capturamos el frame de video actual y lo renderizamos en el canvas temporal oculto
       tempCanvas.width = video.videoWidth;
       tempCanvas.height = video.videoHeight;
       tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
@@ -1005,8 +1019,7 @@ async function camLoop() {
       const dataUrl = tempCanvas.toDataURL('image/jpeg');
       const base64Data = dataUrl.split(',')[1];
 
-      // Envío síncrono al contenedor de Docker
-      const response = await fetch(getDockerUrl(), {
+      const response = await fetch(URL_DOCKER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: base64Data
@@ -1024,9 +1037,8 @@ async function camLoop() {
         document.getElementById('fpsCounter').textContent = frameCount + ' fps';
         frameCount = 0; lastFpsTime = now;
       }
-    } catch (e) { /* Captura de excepciones en frames rápidos para no congelar el loop */ }
+    } catch (e) { /* Control de skips por frames rápidos */ }
   }
-  // Al colocarlo aquí garantizamos que se pida el siguiente frame solo tras recibir la respuesta HTTP del Docker
   if (isRunning) requestAnimationFrame(camLoop);
 }
 
@@ -1045,7 +1057,7 @@ function clearAll() {
   document.getElementById('imgEl').style.display = 'none';
   document.getElementById('imgEl').src = '';
   document.getElementById('canvas').getContext('2d').clearRect(0, 0, 9999, 9999);
-  document.getElementById('detList').innerHTML = '<div class="no-detections">Sin cascos detectados</div>';
+  document.getElementById('detList').innerHTML = '<div class="no-detections">Sin detecciones aún</div>';
   document.getElementById('countNum').textContent = '0';
   document.getElementById('countNum').style.color = 'var(--blue)';
   showPlaceholder(true);

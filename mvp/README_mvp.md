@@ -5,6 +5,7 @@
 ---
 
 **Equipo:** Giancarlo Ferreyra · Sebastián Muñico · Fernando Maquera
+
 **Nombre del MVP:** EPP-Guard
 
 ---
@@ -115,7 +116,7 @@ Subir una foto de obra o activar la webcam y verificar: detección visual, alert
 1. Abrir el frontend en **Google Chrome** (con aceleración por hardware activada).
 2. Esperar a que el indicador diga **"Modelo listo"** (verde).
 3. Click en **"Subir Foto"** o arrastrar una imagen de obra.
-4. El sistema marca: 🟢 con casco (`helmet`), 🔴 sin casco (`head`), 🔵 persona (`person`).
+4. El sistema marca: 🔵 con casco (`helmet`), 🔴 sin casco (`head`), 🟢 persona (`person`).
 5. Si hay alguien sin casco, el contador se pone en rojo y se dispara la alerta.
 
 ### Opción 2 — Webcam en vivo
@@ -137,9 +138,9 @@ Subir una foto de obra o activar la webcam y verificar: detección visual, alert
 
 | Clase | Significado | Color |
 |---|---|---|
-| `helmet` | Persona con casco de seguridad | 🟢 Verde |
+| `helmet` | Persona con casco de seguridad | 🔵 Verde |
 | `head` | Cabeza sin casco → incumplimiento | 🔴 Rojo |
-| `person` | Persona detectada | 🔵 Azul |
+| `person` | Persona detectada | 🟢 Azul |
 
 ---
 

@@ -9,8 +9,10 @@
 - Integrante 2: Sebastian Leonardo Muñico Diaz
 - Integrante 3: Fernando Maquera
 
-**Fecha de entrega:** [completar — Semana 14]
+**Fecha de entrega:** 26/06/2026 — Semana 14
+
 **Tipo de IA del proyecto:** ML Tradicional — Visión Computacional / Detección de objetos (clasificación supervisada)
+
 **Versión:** v2 (final PC2)
 
 > **Actualización PC2:** Se confirma con datos reales el dataset efectivamente usado para entrenar el modelo final (`epp-casco-v3`) y se documenta el bloqueante de inferencia que apareció en la Fase M (agotamiento de créditos de Roboflow) y su resolución (despliegue self-hosted con Docker + Pinggy y frontend en Netlify).

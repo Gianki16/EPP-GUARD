@@ -5,6 +5,7 @@
 ---
 
 **Equipo:** Giancarlo Ferreyra · Sebastián Muñico · Fernando Maquera
+
 **Nombre del MVP:** EPP-Guard
 
 ---

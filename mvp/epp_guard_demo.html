@@ -14,7 +14,7 @@
     --dark:   #0A0A0A;
     --dark2:  #111111;
     --dark3:  #1A1A1A;
-    --dark4:  #242424;
+    --dark4:  --242424;
     --white:  #F0EDE6;
     --gray:   #666;
     --lgray:  #999;
@@ -355,7 +355,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    max-height: 280px;
+    max-height: 200px;
     overflow-y: auto;
   }
 
@@ -433,7 +433,7 @@
     margin-top: 3px;
   }
 
-  /* Config de alerta WhatsApp */
+  /* Config de alertas e inputs genéricos */
   .alert-config { display: flex; flex-direction: column; }
 
   .alert-label {
@@ -637,6 +637,15 @@
       <div class="slider-hint">Más alto = más preciso, menos falsos positivos</div>
     </div>
 
+    <div class="sidebar-section">
+      <div class="sidebar-title">Servidor de Inferencia</div>
+      <div class="alert-config">
+        <label class="alert-label">URL del Servidor Docker</label>
+        <input type="text" id="serverUrl" class="alert-input" value="http://localhost:9001" placeholder="http://localhost:9001">
+        <div class="slider-hint" style="margin-top:5px;">Cambia a la IP de tu VPS si despliegas el Docker en la nube.</div>
+      </div>
+    </div>
+
     <div class="sidebar-section" style="flex:1">
       <div class="sidebar-title">Detecciones en escena</div>
       <div class="detections-list" id="detList">
@@ -684,10 +693,9 @@
 </footer>
 
 <script>
-// ── CONFIG — Parámetros de comunicación e infraestructura local ──────
+// ── CONFIG — Credenciales fijas de Roboflow ──────────────────────
 const API_KEY = "gHgk0Js3DhBYEbqN7cr4";
 const MODEL_ID = "epp-casco-v3/1";
-const URL_DOCKER = `http://localhost:9001/${MODEL_ID}?api_key=${API_KEY}`;
 
 // Canvas auxiliar oculto para capturar frames de la webcam
 const tempCanvas = document.createElement('canvas');
@@ -729,6 +737,12 @@ async function initModel() {
   }
 }
 
+// Helper para construir dinámicamente la URL leyendo el input de la pantalla
+function getDockerEndpoint() {
+  const serverUrl = document.getElementById('serverUrl').value.trim().replace(/\/$/, "");
+  return `${serverUrl}/${MODEL_ID}?api_key=${API_KEY}`;
+}
+
 // ── HELPERS UI ───────────────────────────────────────────────────
 function setStatus(msg, type = '') {
   document.getElementById('statusText').textContent = msg;
@@ -754,7 +768,7 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// ── DIBUJAR PREDICCIONES (Formatos Hexadecimales para Evitar Cuadros Negros) ──
+// ── DIBUJAR PREDICCIONES (Colores Hexadecimales Fijos Solicitados) ──
 function drawPredictions(predictions, sourceEl) {
   const canvas  = document.getElementById('canvas');
   const ctx     = canvas.getContext('2d');
@@ -774,8 +788,6 @@ function drawPredictions(predictions, sourceEl) {
   const scaleY = rect.height / (sourceEl.videoHeight || sourceEl.naturalHeight || sourceEl.height);
 
   const threshold = getConfidence();
-  
-  // Filtrar las predicciones válidas según el umbral configurado
   const validPreds = predictions.filter(p => p.confidence >= threshold);
 
   const helmets = validPreds.filter(p => p.class === 'helmet');
@@ -801,7 +813,6 @@ function drawPredictions(predictions, sourceEl) {
     const h = pred.height * scaleY;
     const conf = Math.round(pred.confidence * 100);
 
-    // Asignación de colores fijos en formato Hexadecimal nativo para el Canvas API
     let boxColor = '#3B82F6'; 
     let labelName = 'Operario';
     let icon = '👤';
@@ -851,10 +862,9 @@ function drawPredictions(predictions, sourceEl) {
     ctx.fill();
     ctx.restore();
 
-    ctx.fillStyle = '#ffffff'; // Texto siempre blanco para excelente contraste
+    ctx.fillStyle = '#ffffff'; 
     ctx.fillText(label, labelX + PAD, labelY + LABEL_H / 2 + 4);
 
-    // Agregar elemento dinámico al panel lateral de detecciones
     const item = document.createElement('div');
     item.className = itemClass;
     item.innerHTML = `
@@ -865,11 +875,10 @@ function drawPredictions(predictions, sourceEl) {
     detList.appendChild(item);
   });
 
-  // Marcador principal de cascos
   document.getElementById('countNum').textContent = helmets.length;
   document.getElementById('countNum').style.color = helmets.length > 0 ? '#22C55E' : '#3B82F6';
 
-  // Lógica de cálculo de infracciones SSO
+  // Infracción SSO si hay cabezas expuestas o más personas que cascos
   const personasSinCasco = Math.max(heads.length, persons.length - helmets.length);
   
   if (personasSinCasco > 0) {
@@ -957,11 +966,12 @@ function readFile(file) {
 
 async function runOnImage(imgEl) {
   if (!workerId) { setStatus('Inicia la conexión con Docker primero', ''); return; }
-  setStatus('Analizando con Docker Local...', 'active');
+  setStatus('Analizando con Docker...', 'active');
   try {
     const base64Data = imgEl.src.split(',')[1];
+    const targetUrl = getDockerEndpoint(); // Lee dinámicamente el input del servidor
     
-    const response = await fetch(URL_DOCKER, {
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: base64Data
@@ -974,7 +984,7 @@ async function runOnImage(imgEl) {
     drawPredictions(preds, imgEl);
     setStatus("Análisis completado — " + preds.length + " objeto(s) detectado(s)", 'active');
   } catch (e) {
-    setStatus('Error en inferencia de Docker local', 'error');
+    setStatus('Error en inferencia del servidor Docker', 'error');
     console.error(e);
   }
 }
@@ -984,7 +994,7 @@ function dragOver(e) { e.preventDefault(); document.getElementById('dropZone').c
 function dragLeave() { document.getElementById('dropZone').classList.remove('active'); }
 function dropFile(e) { e.preventDefault(); dragLeave(); const file = e.dataTransfer.files[0]; if (file) readFile(file); }
 
-// ── WEBCAM EN VIVO HACIA DOCKER ─────────────────────────────────────
+// ── WEBCAM EN VIVO HACIA DOCKER DINÁMICO ───────────────────────────
 async function startCam() {
   if (!workerId) { setStatus('Primero activa la interfaz de Docker', ''); return; }
   try {
@@ -997,7 +1007,7 @@ async function startCam() {
 
     document.getElementById('btnCam').style.display  = 'none';
     document.getElementById('btnStop').style.display = 'inline-block';
-    setStatus('Procesando Webcam localmente en tiempo real', 'active');
+    setStatus('Procesando Webcam a través del servidor configurado', 'active');
 
     isRunning = true;
     requestAnimationFrame(camLoop);
@@ -1018,8 +1028,9 @@ async function camLoop() {
       
       const dataUrl = tempCanvas.toDataURL('image/jpeg');
       const base64Data = dataUrl.split(',')[1];
+      const targetUrl = getDockerEndpoint(); // Lee dinámicamente el input del servidor
 
-      const response = await fetch(URL_DOCKER, {
+      const response = await fetch(targetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: base64Data
@@ -1037,7 +1048,7 @@ async function camLoop() {
         document.getElementById('fpsCounter').textContent = frameCount + ' fps';
         frameCount = 0; lastFpsTime = now;
       }
-    } catch (e) { /* Control de skips por frames rápidos */ }
+    } catch (e) { /* Control de skips */ }
   }
   if (isRunning) requestAnimationFrame(camLoop);
 }

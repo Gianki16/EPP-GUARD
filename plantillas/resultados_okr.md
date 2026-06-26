@@ -5,8 +5,11 @@
 ---
 
 **Equipo:** Giancarlo Ferreyra · Sebastián Muñico · Fernando Maquera
+
 **Nombre del MVP:** EPP-Guard
-**Fecha de evaluación:** [completar día de medición]
+
+**Fecha de evaluación:** 15/06/2026 —  20/06/2026
+
 **Modelo evaluado:** `epp-casco-v3` — RF-DETR Small (Object Detection)
 
 > **Nota de honestidad metodológica:** Durante la ventana del proyecto no se logró acceso autorizado a una obra de construcción real para instrumentar cámaras en campo. Por eso, los KRs que dependían de una obra piloto (especialmente KR1) se evaluaron en **entorno controlado** con video e imágenes reales de obra, y se reportan con su limitación explícita. No inflamos resultados: un KR parcial bien explicado pesa más en la rúbrica que un número inventado.

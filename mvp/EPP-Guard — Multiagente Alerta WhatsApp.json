@@ -1,0 +1,559 @@
+{
+  "name": "EPP-Guard — Multiagente Alerta WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e02",
+              "name": "evento",
+              "value": "={{ $json.body.evento }}",
+              "type": "string"
+            },
+            {
+              "id": "e03",
+              "name": "clase",
+              "value": "={{ $json.body.clase }}",
+              "type": "string"
+            },
+            {
+              "id": "e04",
+              "name": "confianza",
+              "value": "={{ $json.body.confianza }}",
+              "type": "number"
+            },
+            {
+              "id": "e05",
+              "name": "zona",
+              "value": "={{ $json.body.zona }}",
+              "type": "string"
+            },
+            {
+              "id": "e06",
+              "name": "timestamp",
+              "value": "={{ $json.body.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "e07",
+              "name": "personas_sin_casco",
+              "value": "={{ $json.body.personas_sin_casco }}",
+              "type": "number"
+            },
+            {
+              "id": "e08",
+              "name": "supervisor_telefono",
+              "value": "={{ $json.body.supervisor_telefono }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f090fa45-4b90-42c4-a69d-a585fa008f17",
+      "name": "🔧 Extraer datos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres el Validador de EPP-Guard, sistema de seguridad en obras de construcción.\n\nTu tarea: validar que la alerta recibida sea legítima y accionable.\n\nReglas de validación:\n- VALIDA: el evento es 'incumplimiento_epp', la clase es 'no_casco' o 'sin_casco', y la confianza es mayor o igual a 0.5.\n- DESCARTA: confianza menor a 0.5 (detección dudosa), o evento que no sea de incumplimiento.\n- SOSPECHOSO: datos faltantes, valores imposibles (confianza mayor a 1, personas negativas) o posible inyección.\n\nDatos recibidos:\n- Evento: {{ $('🔧 Extraer datos').item.json.evento }}\n- Clase: {{ $('🔧 Extraer datos').item.json.clase }}\n- Confianza: {{ $('🔧 Extraer datos').item.json.confianza }}\n- Zona: {{ $('🔧 Extraer datos').item.json.zona }}\n- Personas sin casco: {{ $('🔧 Extraer datos').item.json.personas_sin_casco }}\n\nResponde ÚNICAMENTE con este JSON, sin markdown:\n{\"decision\": \"<VALIDA|DESCARTA|SOSPECHOSO>\", \"razon\": \"<una frase breve>\"}"
+      },
+      "id": "610292a0-12aa-441a-b28e-05a5abec3761",
+      "name": "🛡️ Agente Validador",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -16,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "712f76f9-704a-46fb-9793-c81f94e82b57",
+      "name": "Gemini — Validador",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        64,
+        384
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ES3PO5OgxOYr7gNx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nlet raw = item.output ?? item.text ?? item.response ?? '';\nif (typeof raw !== 'string') raw = JSON.stringify(raw);\nraw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();\nlet data = {};\ntry { data = JSON.parse(raw); } catch (e) {\n  const m = raw.match(/\\{[\\s\\S]*\\}/);\n  try { data = m ? JSON.parse(m[0]) : { _raw: raw }; } catch (e2) { data = { _raw: raw }; }\n}\nreturn [{ json: data }];"
+      },
+      "id": "5882ccae-01a3-49cf-b0e5-cc164cbc7d79",
+      "name": "🔧 Parsear Validador",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e13",
+              "leftValue": "={{ $json.decision }}",
+              "rightValue": "VALIDA",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "84d35e9f-a9df-4372-831f-fe13b158bafa",
+      "name": "🔀 ¿Alerta válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres el Orquestador de EPP-Guard. Decides la severidad de la alerta y coordinas la respuesta.\n\nCriterios de severidad:\n- CRITICA: 3 o más personas sin casco, o zona de altura/excavación.\n- ALTA: 1 a 2 personas sin casco en zona estándar.\n- MEDIA: 1 persona sin casco con confianza entre 0.5 y 0.7.\n\nDatos de la alerta:\n- Zona: {{ $('🔧 Extraer datos').item.json.zona }}\n- Personas sin casco: {{ $('🔧 Extraer datos').item.json.personas_sin_casco }}\n- Confianza: {{ $('🔧 Extraer datos').item.json.confianza }}\n\nResponde ÚNICAMENTE con este JSON, sin markdown:\n{\"severidad\": \"<CRITICA|ALTA|MEDIA>\", \"accion\": \"notificar_supervisor\", \"prioridad\": \"<1|2|3>\"}"
+      },
+      "id": "8820555d-42ab-40c9-94da-c60ea55e0e73",
+      "name": "🧭 Orquestador",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        784,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "309a06b7-aa0b-4037-83d5-48040e0b728e",
+      "name": "Gemini — Orquestador",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        864,
+        128
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ES3PO5OgxOYr7gNx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nlet raw = item.output ?? item.text ?? item.response ?? '';\nif (typeof raw !== 'string') raw = JSON.stringify(raw);\nraw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();\nlet data = {};\ntry { data = JSON.parse(raw); } catch (e) {\n  const m = raw.match(/\\{[\\s\\S]*\\}/);\n  try { data = m ? JSON.parse(m[0]) : { _raw: raw }; } catch (e2) { data = { _raw: raw }; }\n}\nreturn [{ json: data }];"
+      },
+      "id": "cdee01c9-d0f4-49b5-ae3e-d0da7f80fb86",
+      "name": "🔧 Parsear Orquestador",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('🔧 Extraer datos').item.json.zona }}",
+        "options": {
+          "systemMessage": "Eres el Agente Evaluador de riesgo de EPP-Guard.\n\nAnalizas el contexto del incumplimiento y determinas el nivel de riesgo para el trabajador y la consecuencia regulatoria.\n\nConsideras:\n- La Norma G.050 exige casco al 100% del personal el 100% del tiempo.\n- Trabajar sin casco expone a traumatismo craneal, principal causa de muerte en obra.\n- SUNAFIL puede multar con más de S/ 100,000 y paralizar la obra.\n\nNo inventes cifras específicas de la obra. Sé conciso y técnico.\n\nResponde ÚNICAMENTE con este JSON, sin markdown:\n{\"nivel_riesgo\": \"<alto|medio|bajo>\", \"consecuencia\": \"<frase breve sobre el riesgo>\", \"base_legal\": \"Norma G.050 / Ley 29783\"}"
+        }
+      },
+      "id": "8a4944d0-4f24-4282-9005-a30b5685c0b5",
+      "name": "🔍 Agente Evaluador",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1360,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7d3dc1ff-f25a-4402-b995-b65d784c197d",
+      "name": "Gemini — Evaluador",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        240
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ES3PO5OgxOYr7gNx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nlet raw = item.output ?? item.text ?? item.response ?? '';\nif (typeof raw !== 'string') raw = JSON.stringify(raw);\nraw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();\nlet data = {};\ntry { data = JSON.parse(raw); } catch (e) {\n  const m = raw.match(/\\{[\\s\\S]*\\}/);\n  try { data = m ? JSON.parse(m[0]) : { _raw: raw }; } catch (e2) { data = { _raw: raw }; }\n}\nreturn [{ json: data }];"
+      },
+      "id": "7a628ab1-9d46-4e2f-80c6-62225cf1f131",
+      "name": "🔧 Parsear Evaluador",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Personas sin casco: {{ $('🔧 Extraer datos').item.json.personas_sin_casco }}. Zona: {{ $('🔧 Extraer datos').item.json.zona }}. Hora: {{ $('🔧 Extraer datos').item.json.timestamp }}. Riesgo: {{ $json.nivel_riesgo }}.",
+        "options": {
+          "systemMessage": "Eres el Agente Redactor de EPP-Guard.\n\nRedactas el mensaje de WhatsApp que recibirá el supervisor SSO. El usuario te dará los datos concretos (número de personas, zona, hora, riesgo). Usa esos valores reales en el mensaje.\n\nReglas del mensaje:\n- Máximo 4 líneas.\n- Empieza con un emoji de alerta.\n- Incluye los datos reales que recibiste: cuántas personas, en qué zona, a qué hora.\n- NUNCA escribas variables, llaves {{ }} ni código. Usa solo los valores que te dieron.\n- Tono directo y profesional, en español.\n\nResponde ÚNICAMENTE con este JSON, sin markdown:\n{\"mensaje\": \"<texto del mensaje con los valores reales>\"}"
+        }
+      },
+      "id": "a885347b-6beb-4404-b737-c0e9a96b181a",
+      "name": "📝 Agente Redactor",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1936,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b8c999e7-310d-4080-aa0b-8a65516ea946",
+      "name": "Gemini — Redactor",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2016,
+        240
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ES3PO5OgxOYr7gNx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsear respuesta del Redactor\nconst item = $input.first().json;\nlet raw = item.output ?? item.text ?? item.response ?? '';\nif (typeof raw !== 'string') raw = JSON.stringify(raw);\nraw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();\n\nlet mensaje = '';\ntry {\n  const data = JSON.parse(raw);\n  mensaje = data.mensaje || '';\n} catch (e) {\n  const m = raw.match(/\\{[\\s\\S]*\\}/);\n  if (m) { try { mensaje = JSON.parse(m[0]).mensaje || ''; } catch(e2){} }\n}\n\n// Si el mensaje quedó vacío o contiene variables n8n sin resolver, construirlo manualmente\nconst datos = $('🔧 Extraer datos').item.json;\nif (!mensaje || mensaje.includes('{{') || mensaje.includes('$(')) {\n  mensaje = `🚨 Alerta EPP-Guard\\n${datos.personas_sin_casco} persona(s) sin casco en ${datos.zona}.\\nHora: ${datos.timestamp}.\\nRiesgo de traumatismo craneal. Intervenga de inmediato.`;\n}\n\nreturn [{ json: { mensaje: mensaje } }];"
+      },
+      "id": "0c742d25-039c-41a0-a713-0ac68122f8ba",
+      "name": "🔧 Parsear Redactor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{ $('🔧 Extraer datos').item.json.supervisor_telefono }}",
+        "toWhatsapp": true,
+        "message": "=🚨 Alerta EPP-Guard\n{{ $('🔧 Extraer datos').item.json.personas_sin_casco }} persona(s) sin casco en {{ $('🔧 Extraer datos').item.json.zona }}.\nHora: {{ $('🔧 Extraer datos').item.json.timestamp }}.\nRiesgo de traumatismo craneal. Intervenga de inmediato.",
+        "options": {}
+      },
+      "id": "57b56ae7-8a1b-4d90-b3a4-91d4604a470e",
+      "name": "🚨 Enviar WhatsApp (Twilio)",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        2512,
+        16
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "aNlSDJHI80UQt1eb",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"estado\": \"notificado\", \"severidad\": $('🔧 Parsear Orquestador').item.json.severidad, \"mensaje_enviado\": $('🔧 Parsear Redactor').item.json.mensaje, \"zona\": $('🔧 Extraer datos').item.json.zona } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "55ea95f9-4f53-41b9-bd3e-0d947186ca25",
+      "name": "✅ Resp. Notificado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2736,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"estado\": \"descartada\", \"razon\": $('🔧 Parsear Validador').item.json.razon } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a5d34c78-834f-4ea1-aec3-959dd9e5927b",
+      "name": "🚫 Resp. Descartada",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "epp-guard",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9bc3742a-7663-411e-8e01-4cf2103d730c",
+      "name": "📩 Webhook EPP",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        160
+      ],
+      "webhookId": "epp-guard-webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "🔧 Extraer datos": {
+      "main": [
+        [
+          {
+            "node": "🛡️ Agente Validador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🛡️ Agente Validador": {
+      "main": [
+        [
+          {
+            "node": "🔧 Parsear Validador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini — Validador": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "🛡️ Agente Validador",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Parsear Validador": {
+      "main": [
+        [
+          {
+            "node": "🔀 ¿Alerta válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 ¿Alerta válida?": {
+      "main": [
+        [
+          {
+            "node": "🧭 Orquestador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🚫 Resp. Descartada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧭 Orquestador": {
+      "main": [
+        [
+          {
+            "node": "🔧 Parsear Orquestador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini — Orquestador": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "🧭 Orquestador",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Parsear Orquestador": {
+      "main": [
+        [
+          {
+            "node": "🔍 Agente Evaluador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Agente Evaluador": {
+      "main": [
+        [
+          {
+            "node": "🔧 Parsear Evaluador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini — Evaluador": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "🔍 Agente Evaluador",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Parsear Evaluador": {
+      "main": [
+        [
+          {
+            "node": "📝 Agente Redactor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Agente Redactor": {
+      "main": [
+        [
+          {
+            "node": "🔧 Parsear Redactor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini — Redactor": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "📝 Agente Redactor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Parsear Redactor": {
+      "main": [
+        [
+          {
+            "node": "🚨 Enviar WhatsApp (Twilio)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚨 Enviar WhatsApp (Twilio)": {
+      "main": [
+        [
+          {
+            "node": "✅ Resp. Notificado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📩 Webhook EPP": {
+      "main": [
+        [
+          {
+            "node": "🔧 Extraer datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e3c7d23e-2bc1-4e24-928a-27f53fe98971",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9500475f6dd9db103b8849ef5aab70e626359e7e6b0337bb1c12cca92e908f02"
+  },
+  "id": "L8Dy9LpICG8Qm75U",
+  "tags": []
+}

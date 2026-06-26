@@ -1,22 +1,51 @@
 # EPP-Guard — Detección Automática de EPP en Obras de Construcción
 
-**Curso:** AD5018 Inteligencia Artificial para Negocios | UTEC  
-**Equipo:** 
-- Integrante 1: [Giancarlo Humberto Ferreyra Uribe]
-- Integrante 2: [Sebastian Leonardo Muñico Diaz]
-- Integrante 3: [Fernando Maquera]
-**Fecha de entrega:** [07/05/26]  
+**Curso:** AD5018 Inteligencia Artificial para Negocios | UTEC
+**Equipo:**
+- Integrante 1: Giancarlo Humberto Ferreyra Uribe
+- Integrante 2: Sebastian Leonardo Muñico Diaz
+- Integrante 3: Fernando Maquera
+
+**Entrega:** PC2 — Semana 14 (Fases M + P2 + T)
 **Semestre:** 2026-1
+
+---
+
+## 🔗 URL del MVP
+
+> El frontend está en **Netlify** (URL fija) y los servicios de inferencia (Docker local) y n8n se exponen con **Pinggy** al inicio de la sustentación. Detalle y pasos en [`mvp/README_mvp.md`](./mvp/README_mvp.md).
+
+```
+Frontend (Netlify): https://luminous-klepon-0fdaec.netlify.app/
+Inferencia (Roboflow, Pinggy :9001): https://________.pinggy.link
+Webhook n8n (Pinggy :5678): https://________.pinggy.link/webhook/epp-guard
+```
 
 ---
 
 ## ¿De qué trata este proyecto?
 
-EPP-Guard es un sistema de visión computacional que detecta automáticamente el uso correcto de equipos de protección personal (EPP) en obras de construcción en Lima Metropolitana. Analiza imágenes de cámaras de obra, clasifica si los trabajadores usan casco y chaleco correctamente, y notifica al supervisor SSO cuando detecta un incumplimiento — generando evidencia auditable para SUNAFIL.
+EPP-Guard es un sistema de visión computacional que detecta automáticamente si los trabajadores de una obra usan **casco de seguridad**. Analiza imágenes de cámara o webcam, marca quién tiene casco (`helmet`) y quién no (`head`), y al detectar un incumplimiento notifica al supervisor SSO por WhatsApp en segundos, generando evidencia auditable para SUNAFIL.
 
-**Problema que resuelve:** El supervisor SSO de obras no puede vigilar simultáneamente todos los frentes de trabajo. La supervisión humana cubre solo ~30% de la jornada. La Norma G.050 exige 100% del personal el 100% del tiempo. EPP-Guard cierra esa brecha.
+**Problema que resuelve:** El supervisor SSO no puede vigilar todos los frentes a la vez; la supervisión humana es serial e intermitente. La Norma G.050 exige el 100% del personal protegido el 100% del tiempo. EPP-Guard cierra esa brecha para el EPP de mayor impacto en mortalidad: el casco.
 
-**Tipo de IA:** ML Tradicional — Clasificación supervisada (visión computacional).
+**Tipo de IA:** ML Tradicional — Detección de objetos (clasificación supervisada).
+
+---
+
+## Estado final del proyecto (PC2)
+
+| Componente | Estado |
+|---|---|
+| Dataset | ✅ ~53,700 imágenes (augmentación 3x) — clases head/helmet/person |
+| Modelo final | ✅ `epp-casco-v3` — RF-DETR Small |
+| Métricas (test set) | ✅ mAP@50 **90.9%** · Precision 90.9% · Recall 86.8% · F1 88.7% |
+| Despliegue | ✅ Frontend en Netlify + inferencia Docker local expuesta con Pinggy (S/ 0) |
+| Alertas | ✅ n8n (agentes Gemini 2.5 Flash) → Twilio → WhatsApp (~12 s) |
+| Validación | ✅ 5 usuarios externos + escenarios con imágenes reales |
+| Limitación conocida | ⚠️ Aún reconoce el casco de moto como casco de seguridad — debe dejar de reconocerlo (documentado) |
+
+**Resultado OKR:** KR2 (velocidad) ✅ · KR3 (trazabilidad) ✅ · KPI técnico ✅ · KR1 (cobertura) 🟡 PARCIAL (sin obra real instrumentada).
 
 ---
 
@@ -24,60 +53,44 @@ EPP-Guard es un sistema de visión computacional que detecta automáticamente el
 
 ```
 📁 repositorio/
+├── README.md                          ← Este archivo (índice + estado final + URL MVP)
+├── resumen_ejecutivo.md               ← Síntesis con resultados reales
+├── presentacion_pc2.pdf               ← Deck de sustentación final
 │
-├── README.md                              ← Este archivo
-├── resumen_ejecutivo.md                   ← Síntesis ejecutiva del proyecto (2 páginas)
-├── presentacion.pdf                       ← Deck de 8 slides para la sustentación
+├── 📁 plantillas/
+│   ├── plantilla_1_problem_statement.md   ← Fase P (versión final)
+│   ├── plantilla_2_data_readiness.md      ← Fase R (versión final)
+│   ├── plantilla_3_ai_product_canvas.md   ← Fase O (versión final)
+│   └── plantilla_4_scorecard_risk.md      ← Fases P2 + T (datos reales)
 │
-└── 📁 plantillas/
-│   ├── plantilla_1_problem_statement.md   ← Fase P — Problema de negocio
-│   ├── plantilla_2_data_readiness.md      ← Fase R — Recursos de datos
-│   └── plantilla_3_ai_product_canvas.md   ← Fase O — Oportunidad de IA
-│
-└── 📁 demo/
-    ├── README_demo.md                     ← Como deployar el prototipo
-    └── epp_guard_demo.html                ← Prototipo
+└── 📁 mvp/
+    ├── README_mvp.md                  ← URL de despliegue + instrucciones para el evaluador
+    └── 📁 evidencia/
+        ├── pruebas_usuario.md         ← Validación con usuarios y escenarios reales
+        └── resultados_okr.md          ← Métricas reales vs. metas comprometidas en PC1
 ```
 
 ---
 
-## Archivos del repositorio
+## Qué se actualizó vs. qué es nuevo en la PC2
 
-### [`resumen_ejecutivo.md`](./resumen_ejecutivo.md)
-Síntesis del proyecto en 2 páginas. Cubre: nombre del MVP, declaración del problema, tipo de IA y justificación, diagnóstico de datos con semáforo, descripción del producto y flujo, decisión tecnológica Build/Buy/Integrate con costos en soles, y OKRs con valores actuales y metas.
-
-### [`presentacion.pdf`](./presentacion.pdf)
-Deck de 8 slides para la sustentación oral del PC1. Estructura: Portada → El problema → ¿Por qué IA? → Los datos → El producto → Decisión tecnológica → Compromisos → Próximos pasos.
-
-### [`plantillas/plantilla_1_problem_statement.md`](./plantillas/plantilla_1_problem_statement.md)
-**Fase P — Problema de negocio.** Define el usuario afectado (supervisor SSO), el problema específico (supervisión serial e intermitente), la causa raíz (cuello de botella de atención humana), la consecuencia medible (accidentes, multas), la declaración formal del problema, el filtro de validación de IA y el tipo de IA elegido con justificación.
-
-### [`plantillas/plantilla_2_data_readiness.md`](./plantillas/plantilla_2_data_readiness.md)
-**Fase R — Recursos de datos.** Inventario de las 3 fuentes de datos (datasets públicos PPE, imágenes propias de obra piloto, set de validación peruano), semáforo de calidad por dimensión (disponibilidad, volumen, calidad, relevancia, legalidad), plan de resolución del bloqueante legal (Ley N° 29733), y protocolo de privacidad y anonimización.
-
-### [`plantillas/plantilla_3_ai_product_canvas.md`](./plantillas/plantilla_3_ai_product_canvas.md)
-**Fase O — Oportunidad de IA.** Identidad del producto (EPP-Guard), Tech & Cost Overview con stack referencial y costos en soles, flujo de interacción del usuario, decisión Build/Buy/Integrate justificada, especificaciones del modelo (Teachable Machine para prototipo → Roboflow RF-DETR para producción), alcance del MVP con criterio de éxito, y OKRs con KRs medibles y KPI técnico del modelo.
-
----
-
-## Estado actual del prototipo
-
-| Componente | Estado |
+| Se actualizó del PC1 | Es nuevo en el PC2 |
 |---|---|
-| Dataset combinado | ✅ 8,313 imágenes (Roboflow) |
-| Modelo entrenado | ✅ EPP Detection Lima 1 — RF-DETR Small |
-| Métricas modelo v1 | mAP@0.5: 97.7% · Precision: 99.6% · Recall: 97.6% |
-| Iteración pendiente | 🔄 Unificar clases duplicadas → Version 2 (meta: mAP ≥ 80%) |
+| README.md (estado final + URL del MVP) | presentacion_pc2.pdf |
+| resumen_ejecutivo.md (resultados reales) | plantillas/plantilla_4_scorecard_risk.md |
+| plantillas 1, 2 y 3 (versión final) | mvp/README_mvp.md |
+| | mvp/evidencia/pruebas_usuario.md |
+| | mvp/evidencia/resultados_okr.md |
 
 ---
 
 ## Regulación aplicable
 
-- **Ley N° 29733** — Protección de Datos Personales (Perú): aplica a imágenes de trabajadores.
-- **D.S. 003-2013-JUS** — Reglamento de la Ley 29733: datos biométricos sensibles.
-- **Ley N° 29783** — Seguridad y Salud en el Trabajo: marco de responsabilidad del empleador.
+- **Ley N° 29733** — Protección de Datos Personales (imágenes de trabajadores).
+- **D.S. 003-2013-JUS** — Reglamento de la Ley 29733 (datos biométricos).
+- **Ley N° 29783** — Seguridad y Salud en el Trabajo (responsabilidad del empleador).
 - **Norma G.050** — Seguridad durante la Construcción (DS N° 010-2009-VIVIENDA): EPP exigidos.
 
 ---
 
-*Framework PROMPT v1.1 — AD5018 UTEC | PC1 Semana 6*
+*Framework PROMPT v1.1 — AD5018 UTEC | PC2 Semana 14*

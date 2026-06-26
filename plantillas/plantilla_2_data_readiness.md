@@ -5,17 +5,15 @@
 ---
 
 **Equipo:**
-- Integrante 1: [Giancarlo Humberto Ferreyra Uribe]
-- Integrante 2: [Sebastian Leonardo Muñico Diaz]
-- Integrante 3: [Fernando Maquera]
+- Integrante 1: Giancarlo Humberto Ferreyra Uribe
+- Integrante 2: Sebastian Leonardo Muñico Diaz
+- Integrante 3: Fernando Maquera
 
-**Fecha de entrega:** 07/05/2026
-**Tipo de IA del proyecto:** ML Tradicional — Visión Computacional / Clasificación supervisada (detección de objetos)
+**Fecha de entrega:** [completar — Semana 14]
+**Tipo de IA del proyecto:** ML Tradicional — Visión Computacional / Detección de objetos (clasificación supervisada)
+**Versión:** v2 (final PC2)
 
----
-
-> **Instrucción general:**
-> Completa esta plantilla SOLO después de haber verificado la existencia y calidad de los datos — no antes. Cada semáforo debe estar respaldado por evidencia concreta. Un checklist optimista sin evidencia no tiene valor.
+> **Actualización PC2:** Se confirma con datos reales el dataset efectivamente usado para entrenar el modelo final (`epp-casco-v3`) y se documenta el bloqueante de inferencia que apareció en la Fase M (agotamiento de créditos de Roboflow) y su resolución (despliegue self-hosted con Docker + Pinggy y frontend en Netlify).
 
 ---
 
@@ -30,69 +28,75 @@
 
 | # | Dataset | Fuente | Formato | N° de registros aprox. | ¿Tiene etiquetas? |
 |---|---|---|---|---|---|
-| 1 | Dataset público de detección de EPP en construcción | Roboflow Universe / Kaggle (datasets abiertos de PPE detection) | Imágenes JPG/PNG + anotaciones YOLO/COCO (.txt o .json) | 4,000 – 15,000 imágenes | SÍ (bounding boxes etiquetadas: casco, chaleco reflectivo, calzado, guantes) |
-| 2 | Imágenes de validación en condiciones locales (luz, polvo, atuendo peruano) | Captura propia en obras piloto | JPG | 300-500 imágenes para set de prueba | SÍ — etiquetado manual del equipo |
+| 1 | Dataset combinado de detección de casco/EPP en construcción | Roboflow Universe / Kaggle (datasets abiertos PPE) | Imágenes JPG/PNG + anotaciones (bounding boxes) | **~53,700 imágenes** (con augmentación 3x sobre el set base) | SÍ — clases `head`, `helmet`, `person` |
+| 2 | Imágenes de validación en contexto peruano (luz, polvo, atuendo) | Captura/recolección propia + web de obras peruanas | JPG | 100–250 (set de prueba) | SÍ — etiquetado manual del equipo |
+
+**Distribución de clases del modelo final (`epp-casco-v3`):**
+```
+helmet (con casco) ........ ~35,200 instancias
+person (persona) .......... ~27,735 instancias
+head   (cabeza sin casco) . ~14,011 instancias
+```
 
 **Variable objetivo (target):**
-> *¿Qué es exactamente lo que el modelo debe predecir o clasificar?*
 
 ```
-Por cada persona detectada en un frame de video, clasificar la presencia o
-ausencia correcta de los EPP exigidos por la Norma G.050. En el alcance del MVP
-se priorizan tres EPPs de mayor impacto:
+Por cada persona detectada en un frame, determinar si su cabeza tiene casco
+(`helmet`) o está descubierta (`head`). La presencia de una o más detecciones
+`head` constituye un incumplimiento que dispara la alerta.
 
-  - Casco de seguridad (con/sin)
-  - Chaleco reflectivo (con/sin)
-  - Calzado de seguridad (con/sin)
-  - Guantes de seguridad (con/sin)
+Alcance MVP: el casco de seguridad — el EPP con mayor correlación con accidentes
+mortales por golpe/caída. Chaleco reflectivo, calzado y guantes quedan para v2.
 
-Output esperado: bounding box por persona + etiqueta de cumplimiento por EPP.
+Output: bounding box por objeto + etiqueta (head/helmet/person) + confianza.
 ```
 
 **Tipo de problema confirmado:**
-- [X] Clasificación — predice una categoría (con casco / sin casco, etc.)
+- [X] Clasificación — predice una categoría (con casco / sin casco)
 - [ ] Regresión
 - [ ] Clustering
 
-> *Subtipo técnico: detección de objetos (object detection), que combina localización espacial + clasificación multiclase.*
+> *Subtipo técnico: detección de objetos (object detection) = localización espacial + clasificación multiclase.*
 
 ---
 
-### Para Combinación — completa ambas secciones anteriores y describe la conexión:
-*(No aplica)*
+### Para Combinación
+*(No aplica — la GenAI en n8n solo redacta la alerta; no participa en la detección)*
 
 ---
 
 ## SECCIÓN 2 — Evaluación de calidad con semáforo
 
-> *Instrucciones para el semáforo:*
-> 🟢 **Verde** = listo, sin acciones pendientes
-> 🟡 **Amarillo** = necesita trabajo, hay un plan concreto
-> 🔴 **Rojo** = bloqueante, requiere replantear antes de continuar
+> 🟢 listo · 🟡 necesita trabajo (con plan) · 🔴 bloqueante
 
-### Dataset / Fuente principal: Datasets públicos de PPE detection (Roboflow / Kaggle)
+### Dataset / Fuente principal: Dataset combinado de detección de casco (Roboflow)
 
-| Dimensión | Semáforo | Evidencia que respalda la evaluación | Plan de acción (si es 🟡 o 🔴) |
+| Dimensión | Semáforo | Evidencia que respalda la evaluación | Plan de acción |
 |---|---|---|---|
-| **Disponibilidad** — ¿Los datos existen y son accesibles? | 🟢 | Existen datasets públicos abiertos de PPE detection en Roboflow Universe (>20 datasets indexados) y Kaggle, con licencias de uso para investigación/educación. | — |
-| **Volumen** — ¿Hay suficientes datos para el tipo de IA elegido? | 🟢 | Datasets públicos suman 4,000-15,000 imágenes etiquetadas. Suficiente para fine-tuning de un modelo preentrenado en MVP. | — |
-| **Calidad** — ¿Los datos están completos y son consistentes? | 🟡 | Las anotaciones varían en calidad entre datasets; algunos tienen oclusiones mal etiquetadas o clases inconsistentes. | Filtrar datasets por calidad de anotación, consolidar taxonomía de clases única, descartar imágenes ambiguas. Responsable: [PENDIENTE]. |
-| **Relevancia** — ¿Los datos representan el problema definido en Fase P? | 🟡 | La mayoría de datasets públicos provienen de obras en Asia, EE.UU. o Europa. Los uniformes, condiciones de luz, tipo de andamiaje y polvo de obras peruanas pueden diferir. | Complementar con dataset propio de validación capturado en obra peruana (Dataset 3) para medir caída de desempeño y reentrenar si es necesario. |
-| **Legalidad** — ¿Hay autorización para usar estos datos? | 🟢 | Datasets bajo licencias Creative Commons / MIT / Apache. Para imágenes propias se requeriría consentimiento de la empresa constructora y anonimización de rostros. | — |
-
----
+| **Disponibilidad** | 🟢 | Datasets públicos abiertos de PPE/helmet detection en Roboflow Universe y Kaggle, con licencias de uso. | — |
+| **Volumen** | 🟢 | ~53,700 imágenes tras augmentación; suficiente para entrenar RF-DETR Small con buen desempeño (mAP@50 90.9%). | — |
+| **Calidad** | 🟡 | Las anotaciones variaban entre datasets; se consolidó una taxonomía única de 3 clases y se descartaron imágenes ambiguas. **Falla residual:** el casco de moto aún se reconoce como casco de seguridad (no debería). | Reentrenar con ejemplos negativos (hard-negatives) para que el casco de moto deje de reconocerse como casco. |
+| **Relevancia** | 🟡 | La mayoría de imágenes provienen de obras no peruanas; uniformes/luz/polvo locales pueden diferir. | Set de validación peruano + reentrenamiento si cae el desempeño. |
+| **Legalidad** | 🟢 | Datasets bajo licencias CC / MIT / Apache (modelo final etiquetado Apache-2.0). Para imágenes propias se exige consentimiento y anonimización. | — |
 
 ---
 
 ## SECCIÓN 3 — Plan de resolución de bloqueantes
 
-> *Por cada semáforo 🔴 en cualquier dimensión, el equipo debe completar este plan.*
+### Bloqueante de inferencia (aparecido en Fase M)
+```
+Dimensión afectada: Disponibilidad de inferencia (no del dato, sino del servicio).
+Descripción: El workspace de Roboflow agotó los créditos gratuitos (error 402),
+  bloqueando toda inferencia hosted (inferencejs, REST, SDK) y la descarga de pesos.
+Acción concreta: Correr el modelo en un contenedor Docker local (Roboflow Inference
+  Server) y exponerlo a internet con Pinggy. Segundo túnel para n8n. Frontend en Netlify.
+Responsable: Sebastián Muñico.
+Fecha límite: resuelto antes de la Semana 14.
+Plan B (si falla): cuenta nueva de Roboflow con créditos frescos + fork del proyecto.
+Estado: RESUELTO — inferencia local a costo S/ 0, MVP accesible por URL pública.
+```
 
-### Bloqueante 1
-*(No aplica — los demás semáforos son 🟡 con plan asignado, no bloqueantes 🔴.)*
-
-### Bloqueante 2 *(si aplica)*
-*(No aplica — los demás semáforos son 🟡 con plan asignado, no bloqueantes 🔴.)*
+> Los semáforos de calidad de datos son 🟡 con plan asignado — no hay 🔴 de datos.
 
 ---
 
@@ -100,11 +104,11 @@ Output esperado: bounding box por persona + etiqueta de cumplimiento por EPP.
 
 | Pregunta | Respuesta | Detalle |
 |---|---|---|
-| ¿Los datos contienen información personal de usuarios? | SÍ | Imágenes de obra contienen rostros y características físicas de trabajadores → datos biométricos. |
-| ¿Se cuenta con consentimiento explícito para usar esos datos? | NO  | Uso de datasets publicos. |
-| ¿Los datos serán anonimizados antes de usarlos en el proyecto? | SÍ | Se aplicará blur automático sobre rostros como paso obligatorio del pipeline antes de almacenar. |
-| ¿Aplica la Ley N° 29733 de Protección de Datos Personales del Perú? | SÍ | Aplica plenamente porque se tratan datos biométricos de trabajadores en territorio peruano. |
-| ¿Hay alguna restricción contractual o de confidencialidad? | SÍ (esperado) | El equipo no publicará imágenes identificables ni datos de la obra. |
+| ¿Los datos contienen información personal de usuarios? | SÍ | Imágenes de obra contienen rostros → datos personales/biométricos. |
+| ¿Se cuenta con consentimiento explícito para usar esos datos? | PARCIAL | Datasets públicos con licencia; para imágenes de obra real se requiere consentimiento de la constructora. |
+| ¿Los datos serán anonimizados antes de usarlos? | SÍ | Blur automático de rostros como paso del pipeline antes de almacenar. |
+| ¿Aplica la Ley N° 29733 de Protección de Datos Personales del Perú? | SÍ | Aplica plenamente al tratar datos biométricos de trabajadores en territorio peruano. |
+| ¿Hay alguna restricción contractual o de confidencialidad? | SÍ (esperado) | No se publican imágenes identificables ni datos de la obra. |
 
 ---
 
@@ -113,11 +117,9 @@ Output esperado: bounding box por persona + etiqueta de cumplimiento por EPP.
 | Pregunta de control | Respuesta |
 |---|---|
 | ¿Cada semáforo tiene evidencia concreta que lo respalda? | SÍ |
-| ¿Todos los 🔴 tienen un plan de acción con fecha y responsable? | SÍ |
-| ¿El equipo verificó el acceso real a los datos antes de completar este checklist? | PARCIAL — datasets públicos verificados; obra piloto en gestión |
-| ¿La estrategia de contexto o tipo de ML es coherente con los datos disponibles? | SÍ — detección de objetos supervisada coincide con disponibilidad de datasets etiquetados |
-
-> **Si alguna respuesta es NO → el checklist no está listo para entregar.**
+| ¿Todos los 🔴 tienen un plan de acción con fecha y responsable? | SÍ (el bloqueante de inferencia está resuelto) |
+| ¿El equipo verificó el acceso real a los datos antes de completar este checklist? | SÍ — datasets verificados y modelo entrenado; obra real no instrumentada |
+| ¿La estrategia de tipo de ML es coherente con los datos disponibles? | SÍ — detección de objetos supervisada coincide con datasets etiquetados |
 
 ---
 

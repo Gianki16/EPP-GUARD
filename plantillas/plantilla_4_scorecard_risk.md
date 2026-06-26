@@ -9,7 +9,8 @@
 - Integrante 2: Sebastian Leonardo Muñico Diaz
 - Integrante 3: Fernando Maquera
 
-**Fecha de entrega:** [completar — Semana 14]
+**Fecha de entrega:** 26/06/2026 — Semana 14
+
 **Nombre del MVP:** EPP-Guard
 
 ---

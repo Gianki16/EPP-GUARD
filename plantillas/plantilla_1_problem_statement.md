@@ -9,7 +9,7 @@
 - Integrante 2: Sebastian Leonardo Muñico Diaz
 - Integrante 3: Fernando Maquera
 
-**Fecha de entrega:** [completar — Semana 14]
+**Fecha de entrega:** 26/06/2026 — Semana 14
 **Versión del canvas:** v2 (final PC2)
 
 > **Actualización PC2:** El problema y el usuario no cambian respecto a la PC1. Se actualizaron las cifras de consecuencia con datos oficiales más recientes y citables, y se precisa que el MVP implementado se concentró en el **casco de seguridad** — el EPP de mayor impacto en mortalidad — como decisión de alcance de la Fase M.

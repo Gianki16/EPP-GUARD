@@ -7,7 +7,7 @@
 **Equipo:** Giancarlo Ferreyra · Sebastián Muñico · Fernando Maquera
 **Nombre del MVP:** EPP-Guard
 **Modo de validación:** Usuarios externos + escenarios con imágenes reales de obra
-**Fecha de las pruebas:** [completar]
+**Fecha de las pruebas:** 01/06/2026 —  12/06/2026
 
 ---
 
